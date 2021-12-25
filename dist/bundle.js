@@ -356,6 +356,85 @@ class Matrix{
 			A14*n,A24*n,A34*n,A44*n
 		];
 	}
+
+
+	mulVectors(v,v_){
+		return [
+			v[1]*v_[2]-v[2]*v_[1],
+			v[2]*v_[0]-v[0]*v_[2],
+			v[0]*v_[1]-v[1]*v_[0]
+		];
+	}
+
+
+	subVectors(v,v_){
+		return [
+			v[0]-v_[0],v[1]-v_[1],v[2]-v_[2]
+		];
+	}
+
+
+	norVector(v){
+		const length=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+		if(length>0)
+			return [
+				v[0]/length,
+				v[1]/length,
+				v[2]/length
+			];
+		else
+			return [0,0,0,0];
+	}
+
+
+	lookAt(position,target,up){
+		const vectorZ=this.norVector(
+			this.subVectors(
+				position,
+				target
+			)
+		);
+		const vectorX=this.norVector(
+			this.mulVectors(
+				up,
+				vectorZ
+			)
+		);
+		const vectorY=this.norVector(
+			this.mulVectors(
+				vectorZ,
+				vectorX
+			)
+		);
+		return [
+			vectorX[0],vectorX[1],vectorX[2],0,
+			vectorY[0],vectorY[1],vectorY[2],0,
+			vectorZ[0],vectorZ[1],vectorZ[2],0,
+			position[0],position[1],position[2],1
+		];
+	}
+}
+
+
+function show(d,m,c,t){
+	if(t===undefined){
+		if(c[3]===undefined)
+			c[3]=1;
+		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
+	}
+	else{
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
+		gl.generateMipmap(gl.TEXTURE_2D);
+	}
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d),gl.STATIC_DRAW);
+	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
+	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
+	gl.uniformMatrix4fv(matrix,false,m);
+	gl.drawArrays(gl.TRIANGLES,0,d.length/5);
 }
 
 
@@ -374,21 +453,7 @@ function drawRect(m,c,t){
 		-50,-50,50,
 		0,1
 	];
-	if(t===undefined)
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
-	else{
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
-		gl.generateMipmap(gl.TEXTURE_2D);
-	}
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
-	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
-	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
-	gl.uniformMatrix4fv(matrix,false,m);
-	gl.drawArrays(gl.TRIANGLES,0,data.length/5);
+	show(data,m,c,t);
 }
 
 
@@ -424,7 +489,7 @@ function drawCube(m,c,t){
 		0,1,
 		-50,-50,50,
 		1,1,
-		-50,50,50,
+		-50,50,50,	
 		1,0,
 		-50,50,50,
 		1,0,
@@ -472,21 +537,7 @@ function drawCube(m,c,t){
 		50,-50,-50,
 		0,1
 	];
-	if(t===undefined)
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
-	else{
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
-		gl.generateMipmap(gl.TEXTURE_2D);
-	}
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
-	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
-	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
-	gl.uniformMatrix4fv(matrix,false,m);
-	gl.drawArrays(gl.TRIANGLES,0,data.length/5);
+	show(data,m,c,t);
 }
 
 
@@ -514,21 +565,7 @@ function drawEarth(w,h,m,c,t){
 			);
 		}
 	}
-	if(t===undefined)
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
-	else{
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
-		gl.generateMipmap(gl.TEXTURE_2D);
-	}
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
-	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
-	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
-	gl.uniformMatrix4fv(matrix,false,m);
-	gl.drawArrays(gl.TRIANGLES,0,data.length/5);
+	show(data,m,c,t);
 }
 
 
@@ -548,21 +585,7 @@ function drawCircle(s,r,m,c,t){
 			0.5,0,
 		);
 	}
-	if(t===undefined)
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
-	else{
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAPM_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILIER,gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
-		gl.generateMipmap(gl.TEXTURE_2D);
-	}
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
-	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
-	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
-	gl.uniformMatrix4fv(matrix,false,m);
-	gl.drawArrays(gl.TRIANGLES,0,data.length/5);
+	show(data,m,c,t);
 }
 
 
@@ -588,21 +611,7 @@ function drawCylinder(s,r,l,m,c,t){
 			0,1,
 		);
 	}
-	if(t===undefined)
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([c[0]*255,c[1]*255,c[2]*255,c[3]*255]));
-	else{
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAPM_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILIER,gl.NEAREST);
-		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,t);
-		gl.generateMipmap(gl.TEXTURE_2D);
-	}
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);
-	gl.vertexAttribPointer(position,3,gl.FLOAT,false,20,0);
-	gl.vertexAttribPointer(tex,2,gl.FLOAT,false,20,12);
-	gl.uniformMatrix4fv(matrix,false,m);
-	gl.drawArrays(gl.TRIANGLES,0,data.length/5);
+	show(data,m,c,t);
 }
 
 
@@ -627,24 +636,21 @@ function init(canvas){
 	gl.bindTexture(gl.TEXTURE_2D,texture);
 	mainMatrix=new Matrix();
 	mainMatrix.perspective(1,window.innerWidth/window.innerHeight,1,8000);
+	const initCamera=mainMatrix.lookAt(
+		[0,0,1000],
+		[0,0,-1000],
+		[0,1,0]
+	);
+	const camera=new Matrix(initCamera);
+	mainMatrix.multiply(camera.inverse());
 }
 
 
 function draw(){
 	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-	const camera=new Matrix();
-	camera.rotate(rotates[1],rotates[0],0);
-	camera.translate(0,0,1000);
-	const localMatrix=new Matrix(mainMatrix.data);
-	localMatrix.multiply(camera.inverse());
-	drawEarth(
-		5,5,
-		localMatrix.multiply(
-			localMatrix.rotate(-90,0,0,1),
-			localMatrix.translate(-200,0,0,localMatrix.data)
-		),
-		[0,0.8,0.7,1]
-	);
+	const worldMatrix=new Matrix(mainMatrix.data);
+	worldMatrix.rotate(rotates[1],rotates[0],0);
+	drawCube(worldMatrix.data,[1,1,0]);
 }
 
 
